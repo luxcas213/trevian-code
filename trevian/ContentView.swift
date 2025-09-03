@@ -23,43 +23,98 @@ struct ContentView: View {
                 // Estado inicial: botón “Iniciar Escaneo”
                 if session == nil && !isProgressing && !quickLookIsPresented {
                     Spacer()
-                    Button("Iniciar Escaneo") {
-                        startNewScanWorkflow()
+                    VStack(spacing: 16) {
+                        Text("Tips para un escaneo preciso:")
+                            .font(.headline)
+                            .foregroundColor(.accentColor)
+                        VStack(alignment: .leading, spacing: 6) {
+                            Label("Usa fondo neutro y buena iluminación", systemImage: "lightbulb")
+                            Label("Evita reflejos y sombras", systemImage: "eye")
+                            Label("gira suavemente sobre la planta del pie", systemImage: "camera")
+                        }
+                        .font(.subheadline)
+                        .foregroundColor(.primary)
+                        .padding(.horizontal, 8)
+                        Button("Iniciar Escaneo") {
+                            startNewScanWorkflow()
+                        }
+                        .font(.title2.bold())
+                        .padding()
+                        .background(Color.blue)
+                        .foregroundColor(.white)
+                        .clipShape(Capsule())
                     }
-                    .font(.title2.bold())
-                    .padding()
-                    .background(Color.blue)
-                    .foregroundColor(.white)
-                    .clipShape(Capsule())
+                    .background(Color(.systemBackground).opacity(0.95))
+                    .cornerRadius(18)
+                    .shadow(color: .black.opacity(0.18), radius: 12, x: 0, y: 6)
                     Spacer()
                 }
                 // Sesión activa: mostrar cámara y controles
                 else if session != nil {
-                    ObjectCaptureView(session: session!)
-                        .edgesIgnoringSafeArea(.all)
-                    
-                    VStack(spacing: 16) {
-                        if session!.state == .ready || session!.state == .detecting {
-                            CreateButton(session: session!)
+                    ZStack {
+                        ObjectCaptureView(session: session!)
+                            .edgesIgnoringSafeArea(.all)
+                        VStack {
+                            HStack {
+                                Button(action: { resetAll() }) {
+                                    HStack {
+                                        Image(systemName: "arrow.uturn.backward.circle.fill")
+                                            .font(.title3)
+                                        Text("Reiniciar")
+                                            .font(.subheadline)
+                                    }
+                                    .padding(.vertical, 8)
+                                    .padding(.horizontal, 18)
+                                    .background(Color.red)
+                                    .foregroundColor(.white)
+                                    .clipShape(Capsule())
+                                    .shadow(color: .red.opacity(0.2), radius: 4, x: 0, y: 2)
+                                }
+                                .padding(.leading, 12)
+                                .padding(.top, 12)
+                                Spacer()
+                            }
+                            Spacer()
                         }
-                        
-                        Text("Pasada \(passCount) de \(maxPasses) — Estado: \(session!.state.label)")
-                            .bold()
-                            .foregroundColor(.yellow)
-                            .padding(.bottom, 8)
-                        
-                        Button("Reiniciar Escaneo") {
-                            resetAll()
+                        VStack {
+                            Spacer()
+                            VStack(spacing: 18) {
+                                if session!.state == .ready || session!.state == .detecting {
+                                    Button(action: { session!.state == .ready ? _ = session!.startDetecting() : session!.startCapturing() }) {
+                                        HStack(spacing: 10) {
+                                            Image(systemName: "camera.viewfinder")
+                                                .font(.title2)
+                                            Text(session!.state == .ready ? "Iniciar Escaneo" : "Capturar")
+                                                .font(.title2.bold())
+                                        }
+                                        .padding(.vertical, 12)
+                                        .padding(.horizontal, 32)
+                                        .background(Color.blue)
+                                        .foregroundColor(.white)
+                                        .clipShape(Capsule())
+                                        .shadow(color: .blue.opacity(0.2), radius: 4, x: 0, y: 2)
+                                    }
+                                }
+                                HStack(spacing: 8) {
+                                    Image(systemName: "arrow.triangle.2.circlepath")
+                                        .foregroundColor(.yellow)
+                                    Text("Pasada \(passCount) de \(maxPasses)")
+                                        .bold()
+                                        .foregroundColor(.yellow)
+                                    Image(systemName: "info.circle")
+                                        .foregroundColor(.yellow)
+                                    Text("Estado: \(session!.state.label)")
+                                        .bold()
+                                        .foregroundColor(.yellow)
+                                }
+                                .padding(.bottom, 4)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.horizontal, 8)
+                            .padding(.bottom, 32)
+                            .multilineTextAlignment(.center)
                         }
-                        .font(.subheadline)
-                        .padding(.vertical, 6)
-                        .padding(.horizontal, 12)
-                        .background(Color.red.opacity(0.8))
-                        .foregroundColor(.white)
-                        .clipShape(Capsule())
-                        .padding(.top, 8)
                     }
-                    .background(Color.black.opacity(0.5))
                 }
                 // Fotogrametría en progreso → nada más (overlay lo cubre)
                 else if isProgressing {
